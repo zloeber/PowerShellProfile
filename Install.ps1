@@ -47,17 +47,17 @@ Copy-Item "$($SourcePath)\Microsoft.PowerShell_profile.ps1" -Destination $Instal
 if (Test-Path "$($InstallPath)\Scripts") {
     Write-Host -ForegroundColor Red  "$($InstallPath)\Scripts already exists! Be VERY careful before selecting to overwrite items within it at the next prompt!!!"
 }
-Copy-Item "$($SourcePath)\Scripts" -Destination "$($InstallPath)" -Recurse -Confirm -Force
+Copy-Item "$($SourcePath)\Scripts" -Destination "$($InstallPath)" -Recurse
 
 if (Test-Path "$($InstallPath)\Data\quotes.txt") {
     Write-Warning "$($InstallPath)\Data\quotes.txt already exists! Be VERY careful before selecting to overwrite it in the next prompt!!!"
 }
-Copy-Item -Path "$($SourcePath)\Data" -Destination "$($InstallPath)" -Recurse -Force -Confirm
+Copy-Item -Path "$($SourcePath)\Data" -Destination "$($InstallPath)" -Recurse
 
 if (Test-Path "$($InstallPath)\Modules") {
     Write-Warning "$($InstallPath)\Modules already exists! Be VERY careful before selecting to overwrite items within it at the next prompt!!!"
 }
-Copy-Item -Path "$($SourcePath)\Modules" -Destination "$($InstallPath)\Modules" -Recurse -Force -Confirm
+Copy-Item -Path "$($SourcePath)\Modules" -Destination "$($InstallPath)\Modules" -Recurse
 
 Write-Host ''
 Write-Host "Your new Powershell profile has been installed." -ForegroundColor Green
