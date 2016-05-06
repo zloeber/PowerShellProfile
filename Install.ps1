@@ -50,11 +50,10 @@ if (Test-Path "$($InstallPath)\Data\quotes.txt") {
     Write-Warning "$($InstallPath)\Data\quotes.txt already exists! To fully install this script please copy the scripts from $($targetondisk)\$($ProjectName)\Data to this directory."
 }
 else {
-    New-Item -Path "$($targetondisk)\$($ProjectName)\Data" -ItemType:Directory -ErrorAction:SilentlyContinue
-    Copy-Item "$($targetondisk)\$($ProjectName)\Data\quotes.txt" -Destination "$($InstallPath)\Data\quotes.txt" -Recurse
+    Copy-Item -Path "$($targetondisk)\$($ProjectName)\Data" -Destination "$($InstallPath)" -Recurse
 }
 
-Copy-Item -Confirm $true "$($targetondisk)\$($ProjectName)\Modules" -Destination "$($InstallPath)\Modules" -Recurse
+Copy-Item -Confirm $true -Path "$($targetondisk)\$($ProjectName)\Modules" -Destination "$($InstallPath)\Modules" -Recurse
 
 Write-Host "Profile has been installed" -ForegroundColor Green
 Write-Host "Optionally create a code signing certificate and protect your profile with the following lines of code in a powershell prompt" -ForegroundColor Cyan
