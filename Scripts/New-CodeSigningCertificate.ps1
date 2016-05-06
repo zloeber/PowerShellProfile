@@ -410,7 +410,7 @@ End {
     if (($CodeSigningCerts.Count -eq 0) -or ($Force)) {
         # Create a new self-signed code signing certificate
         try {
-            New-SelfsignedCertificateEx -Subject "CN=Powershell Signing User Certificate" -ProviderName "Microsoft Software Key Storage Provider" -Exportable -EKU 1.3.6.1.5.5.7.3.3 -FriendlyName 'Powershell Local Certificate Root' -StoreName 'Root' -NotAfter ([DateTime]::Now.AddDays(1420))
+            New-SelfsignedCertificateEx -Subject "CN=Powershell Signing User Certificate" -ProviderName "Microsoft Software Key Storage Provider" -Exportable -EKU 1.3.6.1.5.5.7.3.3 -FriendlyName 'Powershell Local Certificate Root' -StoreName 'My' -NotAfter ([DateTime]::Now.AddDays(1420))
 
             Get-ChildItem Cert:\CurrentUser\My | 
                 Where {$_.Subject -eq 'CN=Powershell Signing User Certificate'} | 
@@ -431,7 +431,7 @@ End {
 						$DestStoreTrustedPublisher.Open([System.Security.Cryptography.X509Certificates.OpenFlags]::ReadWrite)
 						$DestStoreTrustedPublisher.Add($copycert)
 						
-						$DestStoreRoot = New-Object  -TypeName System.Security.Cryptography.X509Certificates.X509Store  -ArgumentList 'Root', 'CurrentUser'
+						$DestStoreRoot = New-Object  -TypeName System.Security.Cryptography.X509Certificates.X509Store  -ArgumentList 'Root', 'LocalMachine' #'CurrentUser'
 						$DestStoreRoot.Open([System.Security.Cryptography.X509Certificates.OpenFlags]::ReadWrite)
 						$DestStoreRoot.Add($copycert)
 

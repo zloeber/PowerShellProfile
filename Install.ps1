@@ -66,7 +66,7 @@ Write-Host "     $($InstallPath)\Microsoft.PowerShell_profile.ps1"
 Write-Host ''
 Write-Host 'The profile script is currently not signed and thus can be suspect to tampering without you knowing'  -ForegroundColor Green
 Write-Host "Optionally create a code signing certificate and protect your profile with the following lines of code in a powershell prompt" -ForegroundColor Green
-Write-Host "( Note: You will get a security warning you will have to accept in order to trust the created certificate! )" -ForegroundColor Cyan
+Write-Host "( Note: You may get a security warning you will have to accept in order to trust the created certificate! )" -ForegroundColor Cyan
 Write-Host ''
 Write-Host "    $($InstallPath)\Scripts\New-CodeSigningCertificate.ps1" -ForegroundColor DarkGreen
 Write-Host "    $($InstallPath)\Scripts\Set-ProfileScriptSignature.ps1" -ForegroundColor DarkGreen
