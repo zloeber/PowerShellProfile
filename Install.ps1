@@ -57,7 +57,7 @@ Copy-Item -Path "$($SourcePath)\Data" -Destination "$($InstallPath)" -Recurse -F
 if (Test-Path "$($InstallPath)\Modules") {
     Write-Warning "$($InstallPath)\Modules already exists! Be VERY careful before selecting to overwrite items within it at the next prompt!!!"
 }
-Copy-Item -Confirm -Path "$($SourcePath)\Modules" -Destination "$($InstallPath)\Modules" -Recurse -Force -Confirm
+Copy-Item -Path "$($SourcePath)\Modules" -Destination "$($InstallPath)\Modules" -Recurse -Force -Confirm
 
 Write-Host ''
 Write-Host "Your new Powershell profile has been installed." -ForegroundColor Green

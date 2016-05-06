@@ -418,7 +418,7 @@ End {
 						$thumbprint = $_.Thumbprint
 			            # Move a copy of the certificate from the CA store to the Root store and get an unavoidable pop-up you will have to accept.
 
-                        Move-Item -Path "Cert:\CurrentUser\CA\$($thumbprint)" -Destination Cert:\CurrentUser\Root
+                        #Move-Item -Path "Cert:\CurrentUser\CA\$($thumbprint)" -Destination Cert:\CurrentUser\Root 
 						
 						# To copy the certificate we need to work around a limitation of the psdrive and this provider
 						# http://social.technet.microsoft.com/wiki/contents/articles/28753.powershell-trick-copy-certificates-from-one-store-to-another.aspx
@@ -427,12 +427,17 @@ End {
 
 						$copycert = $SourceStore.Certificates | Where {$_.Thumbprint -eq $thumbprint}
 
-						$DestStore = New-Object  -TypeName System.Security.Cryptography.X509Certificates.X509Store  -ArgumentList 'TrustedPublisher', 'CurrentUser'
-						$DestStore.Open([System.Security.Cryptography.X509Certificates.OpenFlags]::ReadWrite)
-						$DestStore.Add($copycert)
+						$DestStoreTrustedPublisher = New-Object  -TypeName System.Security.Cryptography.X509Certificates.X509Store  -ArgumentList 'TrustedPublisher', 'CurrentUser'
+						$DestStoreTrustedPublisher.Open([System.Security.Cryptography.X509Certificates.OpenFlags]::ReadWrite)
+						$DestStoreTrustedPublisher.Add($copycert)
+						
+						$DestStoreRoot = New-Object  -TypeName System.Security.Cryptography.X509Certificates.X509Store  -ArgumentList 'Root', 'CurrentUser'
+						$DestStoreRoot.Open([System.Security.Cryptography.X509Certificates.OpenFlags]::ReadWrite)
+						$DestStoreRoot.Add($copycert)
 
 						$SourceStore.Close()
-						$DestStore.Close()
+						$DestStoreTrustedPublisher.Close()
+						$DestStoreRoot.Close()
                     }
         }
         catch {
