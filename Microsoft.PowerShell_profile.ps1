@@ -16,6 +16,9 @@
 #>
 trap { Write-Warning ($_.ScriptStackTrace | Out-String) }
 
+# Some variables for later (that also get removed from memory at the end of this profile loading)
+$PersistentHistoryCount = 500
+
 # This timer is used by Trace-Message, I want to start it immediately
 $Script:TraceVerboseTimer = New-Object System.Diagnostics.Stopwatch
 $Script:TraceVerboseTimer.Start()
@@ -150,7 +153,7 @@ if(Test-Path $Home\Projects) {
    The prompt function is in it's own script, and executing it imports previous history
 #>
 if($Host.Name -ne "Package Manager Host") {
-  . Set-Prompt -Clean
+  Set-Prompt -Clean -PersistentHistoryCount $PersistentHistoryCount
   Trace-Message "Prompt fixed"
 }
 
@@ -254,6 +257,7 @@ try {Get-Quote} catch {}
 #>
 Remove-Variable folders -ErrorAction SilentlyContinue
 Remove-Variable SHIFTED -ErrorAction SilentlyContinue
+Remove-Variable PersistentHistoryCount -ErrorAction SilentlyContinue
 
 Trace-Message "Profile Finished!" -KillTimer
 

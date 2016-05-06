@@ -3,7 +3,7 @@
 # 	iex (New-Object Net.WebClient).DownloadString("https://raw.githubusercontent.com/zloeber/PowerShellProfile/master/Install.ps1")
 
 # Some general variables
-$ProjectName = 'NewPowerShellProfile'
+$ProjectName = 'PowerShellProfile'
 $GithubURL = 'https://github.com/zloeber/PowerShellProfile'
 $InstallPath = Split-Path $PROFILE
 
@@ -29,34 +29,36 @@ Rename-Item -Path ($targetondisk+"\$($ProjectName)-master") -NewName "$ProjectNa
 if (Test-Path $PROFILE) {
     $currentprofiles = Get-ChildItem -Path "$($installpath)\Microsoft.PowerShell_profile.*"
     if ($currentprofiles.count -gt 0) {
-        Write-Host -ForegroundColor:Yellow "Microsoft.PowerShell_profile.ps1 already exists, renaming it..."
-        Rename-Item $PROFILE -NewName "$($installpath)\Microsoft.PowerShell_profile.old$($currentprofiles.count)"
+        $BackupProfileName = "$($installpath)\Microsoft.PowerShell_profile.old$($currentprofiles.count)"
+        Write-Host -ForegroundColor:Yellow "Microsoft.PowerShell_profile.ps1 already exists, renaming it to $($BackupProfileName)"
+        Rename-Item $PROFILE -NewName $BackupProfileName
     }
 }
 
 Copy-Item "$($targetondisk)\$($ProjectName)\Microsoft.PowerShell_profile.ps1" -Destination $InstallPath
 
 if (Test-Path "$($InstallPath)\Scripts") {
+    Write-Host ''
     Write-Warning "$($InstallPath)\Scripts already exists! To fully install this script please copy the scripts from $($targetondisk)\$($ProjectName)\Scripts to this directory."
+    Write-Host ''
 }
 else {
     Copy-Item "$($targetondisk)\$($ProjectName)\Scripts" -Destination "$($InstallPath)\Scripts" -Recurse
 }
 
-if (Test-Path "$($InstallPath)\Data") {
-    Write-Warning "$($InstallPath)\Data already exists! To fully install this script please copy the scripts from $($targetondisk)\$($ProjectName)\Data to this directory."
+if (Test-Path "$($InstallPath)\Data\quotes.txt") {
+    Write-Warning "$($InstallPath)\Data\quotes.txt already exists! To fully install this script please copy the scripts from $($targetondisk)\$($ProjectName)\Data to this directory."
 }
 else {
-    Copy-Item "$($targetondisk)\$($ProjectName)\Data" -Destination "$($InstallPath)\Data" -Recurse
+    New-Item -Path "$($targetondisk)\$($ProjectName)\Data" -ItemType:Directory -ErrorAction:SilentlyContinue
+    Copy-Item "$($targetondisk)\$($ProjectName)\Data\quotes.txt" -Destination "$($InstallPath)\Data\quotes.txt" -Recurse
 }
 
 Copy-Item -Confirm $true "$($targetondisk)\$($ProjectName)\Modules" -Destination "$($InstallPath)\Modules" -Recurse
 
 Write-Host "Profile has been installed" -ForegroundColor Green
-Write-Host "Optionally create a code signing certificate and protect your profile with the following two included scripts" -ForegroundColor Cyan
-Write-Host ''
-Write-Host "$($InstallPath)\Scripts\New-CodeSigningCertificate.ps1" -ForegroundColor Cyan
-Write-Host "$($InstallPath)\Scripts\Set-ProfileScriptSignature.ps1" -ForegroundColor Cyan
+Write-Host "Optionally create a code signing certificate and protect your profile with the following lines of code in a powershell prompt" -ForegroundColor Cyan
+Write-Host "Note: You will get a security warning you will have to accept in order to trust the created certificate!" -ForegroundColor Cyan
+Write-Host "New-CodeSigningCertificate.ps1" -ForegroundColor Cyan
+Write-Host "Set-ProfileScriptSignature.ps1" -ForegroundColor Cyan
 Write-Host "Set-ExecutionPolicy AllSigned" -ForegroundColor Cyan
-
-
