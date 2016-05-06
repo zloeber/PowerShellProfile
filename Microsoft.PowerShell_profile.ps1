@@ -158,7 +158,9 @@ if($Host.Name -ne "Package Manager Host") {
 }
 
 if($Host.Name -eq "ConsoleHost" -and !$NOCONSOLE) {
-    if(-not (Get-Module PSReadLine)) { Import-Module PSReadLine }
+    if((-not (Get-Module PSReadLine)) -and (Get-Module -ListAvailable PSReadLine)) {
+        Import-Module PSReadLine
+    }
 
     ## If you have history to reload, you must do that BEFORE you import PSReadLine
     ## That way, the "up arrow" navigation works on the previous session's commands
@@ -185,17 +187,18 @@ if($Host.Name -eq "ConsoleHost" -and !$NOCONSOLE) {
         Set-PSReadlineOption -EmphasisForegroundColor White -EmphasisBackgroundColor $BackgroundColor `
                              -ContinuationPromptForegroundColor DarkBlue -ContinuationPromptBackgroundColor $BackgroundColor -ContinuationPrompt (([char]183) + "  ")
     }
+    if (Get-Module PSReadLine) {
+        Set-PSReadLineMyWay
+        Set-PSReadlineKeyHandler -Key "Ctrl+Shift+R" -Function ForwardSearchHistory
+        Set-PSReadlineKeyHandler -Key "Ctrl+R" -Function ReverseSearchHistory
 
-    Set-PSReadLineMyWay
-    Set-PSReadlineKeyHandler -Key "Ctrl+Shift+R" -Function ForwardSearchHistory
-    Set-PSReadlineKeyHandler -Key "Ctrl+R" -Function ReverseSearchHistory
+        Set-PSReadlineKeyHandler Ctrl+M SetMark
+        Set-PSReadlineKeyHandler Ctrl+Shift+M ExchangePointAndMark
 
-    Set-PSReadlineKeyHandler Ctrl+M SetMark
-    Set-PSReadlineKeyHandler Ctrl+Shift+M ExchangePointAndMark
-
-    Set-PSReadlineKeyHandler Ctrl+K KillLine
-    Set-PSReadlineKeyHandler Ctrl+I Yank
-    Trace-Message "PSReadLine fixed"
+        Set-PSReadlineKeyHandler Ctrl+K KillLine
+        Set-PSReadlineKeyHandler Ctrl+I Yank
+        Trace-Message "PSReadLine fixed"
+    }
 } else {
     Remove-Module PSReadLine -ErrorAction SilentlyContinue
     Trace-Message "PSReadLine skipped!"

@@ -318,10 +318,10 @@ function Write-SessionBanner {
     $PSVersion=$PSVersionTable.PSVersion.Major
 
     Write-Host " -----------------------------------------------------------------------------------------------" -ForegroundColor Green
-    Write-Host "¦`tComputerName:`t`t" -nonewline -ForegroundColor Green;Write-Host $($env:COMPUTERNAME)"`t`t" -nonewline -ForegroundColor Cyan;Write-Host "UserName:`t" -nonewline -ForegroundColor Green;Write-Host $env:UserDomain\$env:UserName"`t`t" -nonewline -ForegroundColor Cyan;Write-Host "¦" -ForegroundColor Green
-    Write-Host "¦`tLogon Server:`t`t" -nonewline -ForegroundColor Green;Write-Host $($env:LOGONSERVER)"`t`t" -nonewline -ForegroundColor Cyan;Write-Host "IP Address:`t" -nonewline -ForegroundColor Green;Write-Host $IPAddress"`t`t" -nonewline -ForegroundColor Cyan;Write-Host "¦" -ForegroundColor Green
-    Write-Host "¦`tPS Execution Policy:`t" -nonewline -ForegroundColor Green;Write-Host $($PSExecPolicy)"`t`t" -nonewline -ForegroundColor Cyan;Write-Host "PS Version:`t" -nonewline -ForegroundColor Green;Write-Host $PSVersion"`t`t`t" -nonewline -ForegroundColor Cyan;Write-Host "¦" -ForegroundColor Green
-    Write-Host "¦`tUptime:`t`t`t" -nonewline -ForegroundColor Green;Write-Host $(Get-Uptime)"`t`t`t`t`t" -nonewline -ForegroundColor Cyan;Write-Host "¦" -ForegroundColor Green
+    Write-Host "ï¿½`tComputerName:`t`t" -nonewline -ForegroundColor Green;Write-Host $($env:COMPUTERNAME)"`t`t" -nonewline -ForegroundColor Cyan;Write-Host "UserName:`t" -nonewline -ForegroundColor Green;Write-Host $env:UserDomain\$env:UserName"`t`t" -nonewline -ForegroundColor Cyan;Write-Host "ï¿½" -ForegroundColor Green
+    Write-Host "ï¿½`tLogon Server:`t`t" -nonewline -ForegroundColor Green;Write-Host $($env:LOGONSERVER)"`t`t" -nonewline -ForegroundColor Cyan;Write-Host "IP Address:`t" -nonewline -ForegroundColor Green;Write-Host $IPAddress"`t`t" -nonewline -ForegroundColor Cyan;Write-Host "ï¿½" -ForegroundColor Green
+    Write-Host "ï¿½`tPS Execution Policy:`t" -nonewline -ForegroundColor Green;Write-Host $($PSExecPolicy)"`t`t" -nonewline -ForegroundColor Cyan;Write-Host "PS Version:`t" -nonewline -ForegroundColor Green;Write-Host $PSVersion"`t`t`t" -nonewline -ForegroundColor Cyan;Write-Host "ï¿½" -ForegroundColor Green
+    Write-Host "ï¿½`tUptime:`t`t`t" -nonewline -ForegroundColor Green;Write-Host $(Get-Uptime)"`t`t`t`t`t" -nonewline -ForegroundColor Cyan;Write-Host "ï¿½" -ForegroundColor Green
     Write-Host " -----------------------------------------------------------------------------------------------`n" -ForegroundColor Green
 }
 
@@ -428,7 +428,9 @@ function Set-Prompt {
                 $ProfileDir = Split-Path $Profile.CurrentUserAllHosts
             }
           ## Import my history
-          Import-CSV $ProfileDir\.poshhistory | Add-History
+          if (Test-Path $ProfileDir\.poshhistory) {
+            Import-CSV $ProfileDir\.poshhistory | Add-History
+          }
        }
 
        if(Get-Module Posh-Git){
