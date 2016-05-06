@@ -68,8 +68,8 @@ Write-Host 'The profile script is currently not signed and thus can be suspect t
 Write-Host "Optionally create a code signing certificate and protect your profile with the following lines of code in a powershell prompt" -ForegroundColor Green
 Write-Host "( Note: You will get a security warning you will have to accept in order to trust the created certificate! )" -ForegroundColor Cyan
 Write-Host ''
-Write-Host "    New-CodeSigningCertificate.ps1" -ForegroundColor DarkGreen
-Write-Host "    Set-ProfileScriptSignature.ps1" -ForegroundColor DarkGreen
-Write-Host "    Set-ExecutionPolicy AllSigned" -ForegroundColor DarkGreen
+Write-Host "    $($InstallPath)\Scripts\New-CodeSigningCertificate.ps1" -ForegroundColor DarkGreen
+Write-Host "    $($InstallPath)\Scripts\Set-ProfileScriptSignature.ps1" -ForegroundColor DarkGreen
+Write-Host "    $($InstallPath)\Scripts\Set-ExecutionPolicy AllSigned" -ForegroundColor DarkGreen
 Write-Host ''
-Write-Host 'Enjoy your new PowerShell profile! (Remember you can hold the shift key while it loads to get more detailed information on what it is doing)'
+Write-Host 'Enjoy your new PowerShell profile! (Remember you can hold the shift key while it loads to get more detailed information on what it is doing)' -ForegroundColor Green
