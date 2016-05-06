@@ -6,30 +6,32 @@
 $ProjectName = 'PowerShellProfile'
 $GithubURL = 'https://github.com/zloeber/PowerShellProfile'
 $InstallPath = Split-Path $PROFILE
+$file = "$($env:TEMP)\$($ProjectName).zip"
+$url = "$GithubURL/archive/master.zip"
+$targetondisk = $env:TEMP
+$SourcePath =  ($targetondisk+"\$($ProjectName)-master")
+
+if (Test-Path $file) {
+    Write-Host -ForegroundColor:DarkYellow 'Prior download already exists, deleting it!'
+    Remove-Item -Force -Path $file -Confirm:$false
+}
 
 # Download and install the zip file to a temp directory and rename it
 $webclient = New-Object System.Net.WebClient
-$url = "$GithubURL/archive/master.zip"
-
 Write-Host "Downloading latest version of PowerShellProfile from $url" -ForegroundColor Cyan
-$file = "$($env:TEMP)\$($ProjectName).zip"
 $webclient.DownloadFile($url,$file)
 Write-Host "File saved to $file" -ForegroundColor Green
 
-$targetondisk = "$(Split-Path $PROFILE)"
-New-Item -ItemType Directory -Force -Path $targetondisk | out-null
 $shell_app=new-object -com shell.application
 $zip_file = $shell_app.namespace($file)
 
+if (Test-Path $SourcePath) {
+    Write-Host -ForegroundColor:DarkYellow 'Prior download directory already exists, deleting it!'
+    Remove-Item -Force -Path  $SourcePath -Confirm:$false
+}
 Write-Host "Uncompressing the Zip file to $($targetondisk)" -ForegroundColor Cyan
 $destination = $shell_app.namespace($targetondisk)
 $destination.Copyhere($zip_file.items(), 0x10)
-Write-Host "Renaming folder" -ForegroundColor Cyan
-
-if (Test-Path "$targetondisk\$($ProjectName)") {
-    Remove-Item -Force "$targetondisk\$($ProjectName)" -Confirm:$false
-}
-Rename-Item -Path ($targetondisk+"\$($ProjectName)-master") -NewName "$ProjectName" -Force
 
 if (Test-Path $PROFILE) {
     $currentprofiles = Get-ChildItem -Path "$($installpath)\Microsoft.PowerShell_profile.*"
@@ -40,29 +42,34 @@ if (Test-Path $PROFILE) {
     }
 }
 
-Copy-Item "$($targetondisk)\$($ProjectName)\Microsoft.PowerShell_profile.ps1" -Destination $InstallPath
+Copy-Item "$($SourcePath)\Microsoft.PowerShell_profile.ps1" -Destination $InstallPath
 
 if (Test-Path "$($InstallPath)\Scripts") {
-    Write-Host ''
-    Write-Warning "$($InstallPath)\Scripts already exists! To fully install this script please copy the scripts from $($targetondisk)\$($ProjectName)\Scripts to this directory."
-    Write-Host ''
+    Write-Host -ForegroundColor Red  "$($InstallPath)\Scripts already exists! Be VERY careful before selecting to overwrite items within it at the next prompt!!!"
 }
-else {
-    Copy-Item "$($targetondisk)\$($ProjectName)\Scripts" -Destination "$($InstallPath)\Scripts" -Recurse
-}
+Copy-Item "$($SourcePath)\Scripts" -Destination "$($InstallPath)" -Recurse -Confirm -Force
 
 if (Test-Path "$($InstallPath)\Data\quotes.txt") {
-    Write-Warning "$($InstallPath)\Data\quotes.txt already exists! To fully install this script please copy the scripts from $($targetondisk)\$($ProjectName)\Data to this directory."
+    Write-Warning "$($InstallPath)\Data\quotes.txt already exists! Be VERY careful before selecting to overwrite it in the next prompt!!!"
 }
-else {
-    Copy-Item -Path "$($targetondisk)\$($ProjectName)\Data" -Destination "$($InstallPath)" -Recurse
+Copy-Item -Path "$($SourcePath)\Data" -Destination "$($InstallPath)" -Recurse -Force -Confirm
+
+if (Test-Path "$($InstallPath)\Modules") {
+    Write-Warning "$($InstallPath)\Modules already exists! Be VERY careful before selecting to overwrite items within it at the next prompt!!!"
 }
+Copy-Item -Confirm -Path "$($SourcePath)\Modules" -Destination "$($InstallPath)\Modules" -Recurse -Force -Confirm
 
-Copy-Item -Confirm -Path "$($targetondisk)\$($ProjectName)\Modules" -Destination "$($InstallPath)\Modules" -Recurse
-
-Write-Host "Profile has been installed" -ForegroundColor Green
-Write-Host "Optionally create a code signing certificate and protect your profile with the following lines of code in a powershell prompt" -ForegroundColor Cyan
-Write-Host "Note: You will get a security warning you will have to accept in order to trust the created certificate!" -ForegroundColor Cyan
-Write-Host "New-CodeSigningCertificate.ps1" -ForegroundColor Cyan
-Write-Host "Set-ProfileScriptSignature.ps1" -ForegroundColor Cyan
-Write-Host "Set-ExecutionPolicy AllSigned" -ForegroundColor Cyan
+Write-Host ''
+Write-Host "Your new Powershell profile has been installed." -ForegroundColor Green
+Write-Host "The default persistent history will be 250 lines. This and anything else in the profile can be changed in the following file:" -ForegroundColor Green
+Write-Host "     $($InstallPath)\Microsoft.PowerShell_profile.ps1"
+Write-Host ''
+Write-Host 'The profile script is currently not signed and thus can be suspect to tampering without you knowing'  -ForegroundColor Green
+Write-Host "Optionally create a code signing certificate and protect your profile with the following lines of code in a powershell prompt" -ForegroundColor Green
+Write-Host "( Note: You will get a security warning you will have to accept in order to trust the created certificate! )" -ForegroundColor Cyan
+Write-Host ''
+Write-Host "    New-CodeSigningCertificate.ps1" -ForegroundColor DarkGreen
+Write-Host "    Set-ProfileScriptSignature.ps1" -ForegroundColor DarkGreen
+Write-Host "    Set-ExecutionPolicy AllSigned" -ForegroundColor DarkGreen
+Write-Host ''
+Write-Host 'Enjoy your new PowerShell profile! (Remember you can hold the shift key while it loads to get more detailed information on what it is doing)'
