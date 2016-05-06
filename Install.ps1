@@ -53,7 +53,7 @@ else {
     Copy-Item -Path "$($targetondisk)\$($ProjectName)\Data" -Destination "$($InstallPath)" -Recurse
 }
 
-Copy-Item -Confirm $true -Path "$($targetondisk)\$($ProjectName)\Modules" -Destination "$($InstallPath)\Modules" -Recurse
+Copy-Item -Confirm -Path "$($targetondisk)\$($ProjectName)\Modules" -Destination "$($InstallPath)\Modules" -Recurse
 
 Write-Host "Profile has been installed" -ForegroundColor Green
 Write-Host "Optionally create a code signing certificate and protect your profile with the following lines of code in a powershell prompt" -ForegroundColor Cyan
