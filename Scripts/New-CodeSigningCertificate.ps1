@@ -412,7 +412,7 @@ End {
         try {
             New-SelfsignedCertificateEx -Subject "CN=Powershell Signing User Certificate" -ProviderName "Microsoft Software Key Storage Provider" -Exportable -EKU 1.3.6.1.5.5.7.3.3 -FriendlyName 'Powershell Local Certificate Root' -StoreName 'Root' -NotAfter ([DateTime]::Now.AddDays(1420))
 
-            Get-ChildItem Cert:\CurrentUser\CA | 
+            Get-ChildItem Cert:\CurrentUser\My | 
                 Where {$_.Subject -eq 'CN=Powershell Signing User Certificate'} | 
                     Foreach {
 						$thumbprint = $_.Thumbprint
