@@ -7,23 +7,28 @@ $ProjectName = 'PowerShellProfile'
 $GithubURL = 'https://github.com/zloeber/PowerShellProfile'
 $InstallPath = Split-Path $PROFILE
 
-# Download and install
+# Download and install the zip file to a temp directory and rename it
 $webclient = New-Object System.Net.WebClient
 $url = "$GithubURL/archive/master.zip"
+
 Write-Host "Downloading latest version of PowerShellProfile from $url" -ForegroundColor Cyan
 $file = "$($env:TEMP)\$($ProjectName).zip"
 $webclient.DownloadFile($url,$file)
 Write-Host "File saved to $file" -ForegroundColor Green
+
 $targetondisk = "$(Split-Path $PROFILE)"
 New-Item -ItemType Directory -Force -Path $targetondisk | out-null
 $shell_app=new-object -com shell.application
 $zip_file = $shell_app.namespace($file)
+
 Write-Host "Uncompressing the Zip file to $($targetondisk)" -ForegroundColor Cyan
 $destination = $shell_app.namespace($targetondisk)
 $destination.Copyhere($zip_file.items(), 0x10)
 Write-Host "Renaming folder" -ForegroundColor Cyan
 
-if (Test-Path "$targetondisk\$($ProjectName)") { Remove-Item -Force "$targetondisk\$($ProjectName)" -Confirm:$false }
+if (Test-Path "$targetondisk\$($ProjectName)") {
+    Remove-Item -Force "$targetondisk\$($ProjectName)" -Confirm:$false
+}
 Rename-Item -Path ($targetondisk+"\$($ProjectName)-master") -NewName "$ProjectName" -Force
 
 if (Test-Path $PROFILE) {
