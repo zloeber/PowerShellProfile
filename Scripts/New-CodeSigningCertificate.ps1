@@ -5,15 +5,28 @@
     Creates a self-signed local CA and then creates a code signing certificate from it.
 .PARAMETER Force
     Forcefully creates another code signing certificate (AND trusted CA) even if a code signing certificate already exists.
+.PARAMETER Secure
+    Prompt for password to perform a more secure self-signed code signing certificate configuration.
+
 .EXAMPLE
     New-CodeSigningCertificate
     
-    Creates a self-signed local CA and then creates a code signing certificate from it.     
+    Creates a self-signed root and trusted publisher certificate. The certificate is left stored in the 
+    CurrentUser's My store for future signing requests without any passwords.
+    
+.EXAMPLE
+    New-CodeSigningCertificate
+    
+    Creates a self-signed root and trusted publisher certificate. A password protected pfx named codesigningcert.pfx is saved 
+    in the current user's powershell profile and removed from the CurrentUser's My store. Future signing requests should use this
+    PFX file (and thus be prompted for the password).
 #>
 [CmdletBinding()]
 Param (
     [Parameter(position=0)]
-    [switch]$Force
+    [switch]$Force,
+    [Parameter(position=1)]
+    [switch]$Secure
 )
 
 Begin {
@@ -165,6 +178,8 @@ Begin {
     	"Microsoft Software Key Storage Provider" -Exportable
     	
     	Creates self-signed root CA certificate.
+    .Link
+        https://www.sysadmins.lv/blog-en/self-signed-certificate-creation-with-powershell.aspx
     #>
     [CmdletBinding(DefaultParameterSetName = '__store')]
     	param (
@@ -403,48 +418,97 @@ Begin {
     		}
     	}
     }
-
+    if (($CodeSigningCerts.Count -ne 0) -and (-not $Force)) {
+        Write-Warning 'A code signing cert was found to already exist. Run again with the -Force switch to create another one anyway'
+        return
+    }
+    
 }
 Process {}
 End {
-    if (($CodeSigningCerts.Count -eq 0) -or ($Force)) {
-        # Create a new self-signed code signing certificate
-        try {
-            New-SelfsignedCertificateEx -Subject "CN=Powershell Signing User Certificate" -ProviderName "Microsoft Software Key Storage Provider" -Exportable -EKU 1.3.6.1.5.5.7.3.3 -FriendlyName 'Powershell Local Certificate Root' -StoreName 'My' -NotAfter ([DateTime]::Now.AddDays(1420))
-
-            Get-ChildItem Cert:\CurrentUser\My | 
-                Where {$_.Subject -eq 'CN=Powershell Signing User Certificate'} | 
-                    Foreach {
-						$thumbprint = $_.Thumbprint
-			            # Move a copy of the certificate from the CA store to the Root store and get an unavoidable pop-up you will have to accept.
-
-                        #Move-Item -Path "Cert:\CurrentUser\CA\$($thumbprint)" -Destination Cert:\CurrentUser\Root 
-						
-						# To copy the certificate we need to work around a limitation of the psdrive and this provider
-						# http://social.technet.microsoft.com/wiki/contents/articles/28753.powershell-trick-copy-certificates-from-one-store-to-another.aspx
-						$SourceStore = New-Object  -TypeName System.Security.Cryptography.X509Certificates.X509Store  -ArgumentList 'My', 'CurrentUser'
-						$SourceStore.Open([System.Security.Cryptography.X509Certificates.OpenFlags]::ReadOnly)
-
-						$copycert = $SourceStore.Certificates | Where {$_.Thumbprint -eq $thumbprint}
-
-						$DestStoreTrustedPublisher = New-Object  -TypeName System.Security.Cryptography.X509Certificates.X509Store  -ArgumentList 'TrustedPublisher', 'CurrentUser'
-						$DestStoreTrustedPublisher.Open([System.Security.Cryptography.X509Certificates.OpenFlags]::ReadWrite)
-						$DestStoreTrustedPublisher.Add($copycert)
-						
-						$DestStoreRoot = New-Object  -TypeName System.Security.Cryptography.X509Certificates.X509Store  -ArgumentList 'Root', 'LocalMachine' #'CurrentUser'
-						$DestStoreRoot.Open([System.Security.Cryptography.X509Certificates.OpenFlags]::ReadWrite)
-						$DestStoreRoot.Add($copycert)
-
-						$SourceStore.Close()
-						$DestStoreTrustedPublisher.Close()
-						$DestStoreRoot.Close()
-                    }
+    # Create a new self-signed code signing certificate
+    try {
+        #New-SelfsignedCertificateEx -Subject "CN=Powershell Signing User Certificate" -ProviderName "Microsoft Software Key Storage Provider" -Exportable -EKU 1.3.6.1.5.5.7.3.3 -FriendlyName 'Powershell Local Certificate Root' -StoreName 'Root' -NotAfter ([DateTime]::Now.AddDays(1420))
+        $ProfPath = Split-Path $Profile
+        $CertReqSplat = @{
+            Subject = 'CN=Powershell Signing User Certificate'
+            ProviderName = 'Microsoft Software Key Storage Provider'
+            SignatureAlgorithm = 'SHA256'
+            KeyLength = 4096
+            EKU = '1.3.6.1.5.5.7.3.3'
+            FriendlyName = 'Powershell Local Certificate Root'
+            NotAfter = ([DateTime]::Now.AddDays(1420))
+            Exportable = $true
         }
-        catch {
-            throw 'There was an issue creating the code signing certificate!'
+        if ($Secure) {
+            $Pass1 = Read-Host -AsSecureString -Prompt 'Please provide a password for your PFX file'
+            $Pass2 = Read-Host -AsSecureString -Prompt 'Please enter that password in again so you know you remember it!'
+            $pwd1_text = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($Pass1))
+            $pwd2_text = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($Pass2))
+            if ($pwd1_text -ne $pwd2_text) {
+                Write-Warning "Passwords do not match! Doing nothing!"
+                return
+            }
+            if (Test-Path "$($ProfPath)\codesigningcert.pfx") {
+                Remove-Item "$($ProfPath)\codesigningcert.pfx" -Confirm -ErrorAction Stop
+                if (Test-Path "$($ProfPath)\codesigningcert.pfx") {
+                    Write-Error 'Existing code signing cert was found and you chose not to remove it. Stopping processing.'
+                    return
+                }
+            }
+            $CertReqSplat.Path = "$($ProfPath)\codesigningcert.pfx"
+            $CertReqSplat.Password = ConvertTo-SecureString -String $pwd1_text -Force –AsPlainText
+        }
+            
+        New-SelfsignedCertificateEx @CertReqSplat
+        
+        Get-ChildItem Cert:\CurrentUser\My | Where {$_.Subject -eq 'CN=Powershell Signing User Certificate'} | Foreach {
+			$thumbprint = $_.Thumbprint
+
+            if ($Secure) {
+                # So we need to get the public part of the certificate in the trusted publishers and root stores
+                # to do this we need to export it, delete, then import it (in a way). The pfx should have already
+                # been created if we got to this point.
+                
+                # Export the cert in just cer format (no private key)
+                $cert = Get-Item "Cert:\CurrentUser\My\$($thumbprint)"
+                $bytes = $cert.Export('Cert')
+                
+                # delete certificate
+                $store = new-object system.security.cryptography.x509certificates.x509Store 'My', 'CurrentUser'
+                $store.Open('ReadWrite')
+                $store.Remove($cert)
+                
+                # re-import certificate (cer)
+                $container = new-object system.security.cryptography.x509certificates.x509certificate2collection
+                $container.Import($bytes)
+                $store.Add($container[0])
+                $store.Close()
+                
+                # Now go ahead and move it to the trustedpublisher store.
+                Move-Item -Path "Cert:\CurrentUser\My\$($thumbprint)" -Destination Cert:\CurrentUser\TrustedPublisher
+            }
+            else {
+                # Insecurely we don't give a crap if we copy over the private key.
+                Copy-Item -Path "Cert:\CurrentUser\My\$($thumbprint)" -Destination Cert:\CurrentUser\TrustedPublisher
+            }
+            
+			# To copy the certificate we need to work around a limitation of the psdrive and this provider
+			# http://social.technet.microsoft.com/wiki/contents/articles/28753.powershell-trick-copy-certificates-from-one-store-to-another.aspx
+			$SourceStore = New-Object  -TypeName System.Security.Cryptography.X509Certificates.X509Store -ArgumentList 'TrustedPublisher', 'CurrentUser'
+			$SourceStore.Open('MaxAllowed')
+
+			$copycert = $SourceStore.Certificates | Where {$_.Thumbprint -eq $thumbprint}
+
+			$DestStore = New-Object -TypeName System.Security.Cryptography.X509Certificates.X509Store -ArgumentList 'Root', 'CurrentUser'
+            $DestStore.Open('MaxAllowed')
+			$DestStore.Add($copycert)
+
+			$SourceStore.Close()
+			$DestStore.Close()
         }
     }
-    else {
-        Write-Warning 'A code signing cert was found to already exist. Run again with the -Force switch to create another one anyway'
+    catch {
+        throw 'There was an issue creating the code signing certificate!'
     }
 }
