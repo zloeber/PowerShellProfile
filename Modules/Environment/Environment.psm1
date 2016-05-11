@@ -306,14 +306,16 @@ function Write-SessionBanner {
         $IPAddress = @(Get-WmiObject Win32_NetworkAdapterConfiguration | Where-Object {$_.DefaultIpGateway})[0].IPAddress[0]
     }
     catch {
-        $IPAddress = 'Offline'
+        $IPAddress = '               '
     }
+    if ($IPAddress.Length -lt 15) {$IPAddress += (' ' * (15-$IPAddress.length))}
     try {
         $IPGateway=@(Get-WmiObject Win32_NetworkAdapterConfiguration | Where-Object {$_.DefaultIpGateway})[0].DefaultIPGateway[0]
     }
     catch {
-        $IPGateway = 'Offline'
+        $IPGateway = '               '
     }
+    if ($IPGateway.Length -lt 15) {$IPGateway += (' ' * (15-$IPGateway.length))}
     $PSExecPolicy=Get-ExecutionPolicy
     $PSVersion=$PSVersionTable.PSVersion.Major
 
@@ -333,13 +335,20 @@ function Write-SessionBanner {
     Write-Host "Current User: " -nonewline -ForegroundColor Green
         Write-Host $env:UserName"`t`t" -nonewline -ForegroundColor Cyan
     Write-Host "GW: " -nonewline -ForegroundColor Green
-        Write-Host $IPGateway"`t`t" -nonewline -ForegroundColor Cyan
+        Write-Host $IPGateway"`t" -nonewline -ForegroundColor Cyan
     Write-Host "PS Version: " -nonewline -ForegroundColor Green
         Write-Host $PSVersion -ForegroundColor Cyan
-    
+
     # Line 3    
-    Write-Host "Uptime:   " -nonewline -ForegroundColor Green
+    Write-Host "Uptime (hardware boot): " -nonewline -ForegroundColor Green
         Write-Host "$(Get-Uptime)" -ForegroundColor Cyan
+
+    # Line 4
+    $FromSleep = Get-Uptime -FromSleep
+    if ($FromSleep) {
+        Write-Host "Uptime (system resume): " -nonewline -ForegroundColor Green
+            Write-Host "$($FromSleep)" -ForegroundColor Cyan
+    }
 }
 
 function Reset-Module ($ModuleName) {
@@ -347,10 +356,22 @@ function Reset-Module ($ModuleName) {
 }
 
 function Get-Uptime {
-    $os = Get-WmiObject win32_operatingsystem
-    $uptime = (Get-Date) - ($os.ConvertToDateTime($os.lastbootuptime))
-    $Display = "" + $Uptime.Days + " days / " + $Uptime.Hours + " hours / " + $Uptime.Minutes + " minutes"
-    Write-Output $Display
+    param(
+        [switch]$FromSleep
+    )
+    try {
+        if (-not $FromSleep) {
+            $os = Get-WmiObject win32_operatingsystem
+            $uptime = (Get-Date) - ($os.ConvertToDateTime($os.lastbootuptime))
+        }
+        else {
+            $Uptime = (((Get-Date)- (Get-EventLog -LogName system -Source 'Microsoft-Windows-Power-Troubleshooter' -Newest 1).TimeGenerated))
+        }
+        $Display = "" + $Uptime.Days + " days / " + $Uptime.Hours + " hours / " + $Uptime.Minutes + " minutes"
+
+        Write-Output $Display
+    }
+    catch {}
 }
 
 function qq {
