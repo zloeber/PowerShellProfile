@@ -5,8 +5,6 @@
     A small wrapper for PowerShellGet to remove all older installed modules.
 .DESCRIPTION
     A small wrapper for PowerShellGet to remove all older installed modules.
-.PARAMETER WhatIf
-    Show modules which would get removed.
 .PARAMETER ModuleName
     Name of a module to check and remove old versions of.
 .EXAMPLE
@@ -23,10 +21,8 @@
        Version History
        1.0.0 - Initial release
 #>
-[CmdletBinding()]
+[CmdletBinding( SupportsShouldProcess = $true )]
 Param (
-    [Parameter(HelpMessage = 'Show modules which would get removed.')]
-    [switch]$WhatIf,
     [Parameter(HelpMessage = 'Name of a module to check and remove old versions of.')]
     [string]$ModuleName = '*'
 )
@@ -47,8 +43,10 @@ Get-InstalledModule $ModuleName | foreach {
         Write-Output "Multiple Module versions for the $($SortedModules[0].Name) module found. Highest version is: $($SortedModules[0].Version.ToString())"
         for ($index = 1; $index -lt $SortedModules.Count; $index++) {
             try {
-                Write-Output "..Attempting to uninstall $($SortedModules[$index].Name) - Version $($SortedModules[$index].Version)"
-                Uninstall-Module -Name $SortedModules[$index].Name -MaximumVersion $SortedModules[$index].Version @WhatIfParam -ErrorAction Stop -Force
+                if ($pscmdlet.ShouldProcess( "$($SortedModules[$index].Name) - $($SortedModules[$index].Version)")) {
+                    Write-Output "..Attempting to uninstall $($SortedModules[$index].Name) - Version $($SortedModules[$index].Version)"
+                    Uninstall-Module -Name $SortedModules[$index].Name -MaximumVersion $SortedModules[$index].Version -ErrorAction Stop -Force
+                }
             }
             catch {
                 Write-Warning "Unable to remove module version $($SortedModules[$index].Version)"

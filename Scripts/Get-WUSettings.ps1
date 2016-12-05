@@ -1,5 +1,5 @@
 # https://p0w3rsh3ll.wordpress.com/2013/01/09/get-windows-update-client-configuration/
-Function Get-WUSettings {
+
 [cmdletbinding()]            
 Param(
 [switch]$viaRegistry=$false            
@@ -181,6 +181,5 @@ Process {
         # return            
         $obj            
     }            
-}            
-End {}            
 }
+End {}
